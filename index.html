@@ -1,0 +1,432 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>Order Tracking | The Modern Jewellery House</title>
+    
+    <link rel="icon" type="image/png" href="assets/favicon.png">
+    <link rel="preconnect" href="https://fonts.googleapis.com">
+    <link rel="preconnect" href="https://fonts.gstatic.com" crossorigin>
+    <link href="https://fonts.googleapis.com/css2?family=Playfair+Display:wght@700&family=Lato:wght@300;400;700&display=swap" rel="stylesheet">
+
+    <style>
+        /* --- Background (No Change) --- */
+        body {
+            font-family: 'Lato', sans-serif;
+            display: flex;
+            justify-content: center;
+            align-items: flex-start;
+            min-height: 100vh;
+            margin: 0;
+            padding: 20px;
+            box-sizing: border-box;
+            overflow-x: hidden;
+            background-color: #e7dada;
+        }
+        #bg-image {
+            position: fixed;
+            top: 0;
+            left: 0;
+            width: 100vw;
+            height: 100vh;
+            object-fit: cover;
+            filter: brightness(0.4) blur(3px);
+            z-index: -2;
+        }
+        body::before {
+            content: '';
+            position: fixed;
+            top: 0;
+            left: 0;
+            width: 100%;
+            height: 100%;
+            background-color: rgba(20, 20, 20, 0.5); 
+            z-index: -1;
+        }
+
+        .main-wrapper {
+            width: 100%;
+            max-width: 550px;
+        }
+
+        /* --- Tracker Card (Cream) (No Change) --- */
+        .tracker-container {
+            background: rgba(26, 0, 0, 0.98); 
+            backdrop-filter: blur(5px);
+            border-radius: 16px;
+            box-shadow: 0 10px 30px rgba(0, 0, 0, 0.1);
+            border: 1px solid rgba(255, 255, 255, 0.1);
+            padding: 30px;
+            box-sizing: border-box;
+            overflow: hidden;
+            animation: pageFadeIn 0.8s ease-out forwards;
+            opacity: 0;
+        }
+
+        /* --- Header & Logo (No Change) --- */
+        .tracker-header {
+            text-align: center;
+            margin-bottom: 25px;
+            animation: slideDown 0.6s ease-out 0.2s forwards;
+            opacity: 0;
+            transform: translateY(-20px);
+        }
+        .logo-image {
+            max-width: 60%;
+            max-height: 80px;
+            height: auto;
+            margin-bottom: 10px;
+        }
+        .tracker-header p.tagline {
+            margin: 0;
+            font-size: 15px;
+            color: #555;
+            font-style: italic;
+        }
+
+        /* --- Form Elements (UPDATED) --- */
+        .tracker-form { display: flex; flex-direction: column; gap: 15px; }
+        
+        #orderIdInput {
+            width: 100%;
+            padding: 16px;
+            font-size: 16px;
+            font-family: 'Lato', sans-serif;
+            
+            /* --- NEW COLORS --- */
+            background-color: #b67804; /* Your dark red */
+            color: #b66904; /* White text */
+            border: 1px solid #5c2b2b; /* Darker red border */
+            /* --- END NEW --- */
+
+            border-radius: 10px;
+            box-sizing: border-box; 
+            transition: border-color 0.3s, box-shadow 0.3s, background-color 0.3s;
+        }
+        
+        /* NEW: Style for placeholder text in the dark box */
+        #orderIdInput::placeholder {
+            color: #d1abab; /* Light red/grey color for placeholder */
+        }
+
+        #orderIdInput:focus {
+            outline: none;
+            border-color: #D4AF37; /* Gold focus border */
+            background-color: #4a1010; /* Slightly lighter red on focus */
+            box-shadow: 0 0 8px rgba(212, 175, 55, 0.3);
+        }
+        /* --- END OF UPDATES --- */
+
+
+        #trackButton {
+            background: #D4AF37;
+            color: #ffffff;
+            font-size: 16px;
+            font-weight: 700;
+            letter-spacing: 0.5px;
+            text-transform: uppercase;
+            padding: 16px;
+            border: none;
+            border-radius: 10px;
+            cursor: pointer;
+            box-shadow: 0 4px 15px rgba(212, 175, 55, 0.2);
+            transition: all 0.3s ease;
+        }
+        #trackButton:hover {
+            background: #c09d31;
+            transform: translateY(-2px);
+            box-shadow: 0 6px 20px rgba(212, 175, 55, 0.3);
+        }
+        #trackButton:disabled {
+            background: #ccc;
+            box-shadow: none;
+            cursor: not-allowed;
+            transform: none;
+        }
+
+        /* --- Results Area (No Change) --- */
+        #resultContainer { margin-top: 30px; }
+        .loader {
+            display: none;
+            margin: 20px auto;
+            border: 4px solid #f3f3f3;
+            border-top: 4px solid #D4AF37;
+            border-radius: 50%;
+            width: 40px;
+            height: 40px;
+            animation: spin 1s linear infinite;
+        }
+        .result-card { animation: slideUpFadeIn 0.6s ease-out forwards; }
+        .current-status-headline {
+            font-family: 'Playfair Display', serif;
+            font-size: 24px;
+            font-weight: 700;
+            color: #D4AF37;
+            text-align: center;
+            margin: 0 0 20px 0;
+        }
+        .progress-bar-container {
+            width: 100%;
+            height: 8px;
+            background: #f0f0f0;
+            border-radius: 4px;
+            overflow: hidden;
+            margin-bottom: 25px;
+        }
+        .progress-bar-fill {
+            height: 100%;
+            background: #D4AF37;
+            border-radius: 4px;
+            width: 0%;
+            transition: width 0.8s ease-out;
+        }
+        .result-header {
+            text-align: center;
+            margin-bottom: 20px;
+            border-bottom: 1px solid #eee;
+            padding-bottom: 15px;
+        }
+        .result-header h3 { margin: 0; font-size: 18px; color: #333; }
+        .result-header p { margin: 5px 0 0; font-size: 15px; color: #555; }
+        
+        .status-timeline { list-style: none; padding: 0; margin: 0; position: relative; }
+        .status-timeline::before {
+            content: '';
+            position: absolute;
+            left: 12px;
+            top: 0;
+            bottom: 0;
+            width: 2px;
+            background: #eee;
+        }
+        .status-timeline li { padding-left: 40px; position: relative; margin-bottom: 25px; }
+        .status-timeline li:last-child { margin-bottom: 0; }
+        .status-timeline li::before {
+            content: '';
+            position: absolute;
+            left: 4px;
+            top: 4px;
+            width: 18px;
+            height: 18px;
+            border-radius: 50%;
+            background: #eee;
+            border: 2px solid #eee;
+            transition: all 0.4s ease;
+        }
+        .status-timeline li .status-title { font-weight: 700; font-size: 16px; color: #aaa; transition: color 0.4s ease; }
+        .status-timeline li .status-desc { font-size: 14px; color: #aaa; transition: color 0.4s ease; }
+        .status-timeline li.active .status-title { color: #1a1a1a; }
+        .status-timeline li.active .status-desc { color: #555; }
+        .status-timeline li.active::before { background: #fff; border-color: #D4AF37; }
+        .status-timeline li.active::after {
+            content: '';
+            position: absolute;
+            left: 9px;
+            top: 9px;
+            width: 8px;
+            height: 8px;
+            border-radius: 50%;
+            background: #D4AF37;
+            transform: scale(0);
+            animation: popIn 0.3s ease 0.2s forwards;
+        }
+        
+        .error-message {
+            color: #dc2626;
+            font-weight: 700;
+            text-align: center;
+            font-size: 16px;
+            padding: 15px;
+            background: #fee2e2;
+            border-radius: 8px;
+            animation: slideUpFadeIn 0.5s ease;
+        }
+
+        /* --- CTA Card (Cream) (No Change) --- */
+        .cta-container {
+            background: rgba(250, 246, 240, 0.95);
+            backdrop-filter: blur(5px);
+            border-radius: 16px;
+            box-shadow: 0 10px 25px rgba(0, 0, 0, 0.1);
+            padding: 25px 30px;
+            margin-top: 30px;
+            text-align: center;
+            animation: slideUpFadeIn 0.7s ease-out 0.5s forwards;
+            opacity: 0;
+            transform: translateY(20px);
+        }
+        .cta-container h2 {
+            font-family: 'Playfair Display', serif;
+            margin: 0 0 15px 0;
+            font-size: 20px;
+            color: #1a1a1a;
+        }
+        .cta-button {
+            display: inline-block;
+            font-weight: 700;
+            text-decoration: none;
+            background: transparent;
+            color: #D4AF37;
+            border: 2px solid #D4AF37;
+            padding: 12px 25px;
+            border-radius: 8px;
+            transition: all 0.3s ease;
+        }
+        .cta-button:hover {
+            background: #D4AF37;
+            color: #fff;
+            transform: translateY(-2px);
+        }
+
+        /* --- Animations (No Change) --- */
+        @keyframes spin { 0% { transform: rotate(0deg); } 100% { transform: rotate(360deg); } }
+        @keyframes pageFadeIn { from { opacity: 0; transform: scale(0.98); } to { opacity: 1; transform: scale(1); } }
+        @keyframes slideDown { from { opacity: 0; transform: translateY(-20px); } to { opacity: 1; transform: translateY(0); } }
+        @keyframes slideUpFadeIn { from { opacity: 0; transform: translateY(20px); } to { opacity: 1; transform: translateY(0); } }
+        @keyframes popIn { from { transform: scale(0); } to { transform: scale(1); } }
+
+        @media (max-width: 400px) {
+            body { padding: 15px; }
+            .tracker-container { padding: 25px 20px; }
+            .cta-container { padding: 25px 20px; }
+        }
+    </style>
+</head>
+<body>
+
+    <img src="assets/BG.jpeg" alt="Luxury Jewellery Background" id="bg-image">
+
+    <div class="main-wrapper">
+        <div class="tracker-container">
+            <div class="tracker-header">
+                <img src="assets/logo.png" alt="The Modern Jewellery House" class="logo-image">
+                <p class="tagline">Crafting moments, one gem at a time.</p>
+            </div>
+            <form class="tracker-form" id="trackingForm">
+                <input type="text" id="orderIdInput" placeholder="Enter your Order ID (e.g., ORD123)" required>
+                <button type="submit" id="trackButton">Track Order</button>
+            </form>
+            <div id="resultContainer">
+                <div class="loader" id="loader"></div>
+            </div>
+        </div>
+
+        <div class="cta-container">
+            <h2>Ready to find your next treasure?</h2>
+            <a href="#" class="cta-button">Explore Our New Collection</a>
+        </div>
+    </div>
+
+    <script>
+        // 1. PASTE YOUR WEB APP URL FROM STEP 1 HERE
+        const SCRIPT_URL = "https://script.google.com/macros/s/AKfycbyI5Mtp0XelKsSzlDI-9zanxkldOtVq9_utO9lWyX4X3EqM1_qAOjIwdEov-NGVW4PTDg/exec";
+
+        const form = document.getElementById('trackingForm');
+        const orderIdInput = document.getElementById('orderIdInput');
+        const trackButton = document.getElementById('trackButton');
+        const resultContainer = document.getElementById('resultContainer');
+        const loader = document.getElementById('loader');
+
+        form.addEventListener('submit', function(e) {
+            e.preventDefault(); 
+            const orderId = orderIdInput.value.trim().toUpperCase(); 
+            if (!orderId) return;
+
+            loader.style.display = 'block';
+            trackButton.disabled = true;
+            trackButton.textContent = 'Searching...';
+            resultContainer.innerHTML = ''; 
+
+            fetch(`${SCRIPT_URL}?orderId=${orderId}&_=${new Date().getTime()}`)
+                .then(response => response.json())
+                .then(res => {
+                    loader.style.display = 'none';
+                    trackButton.disabled = false;
+                    trackButton.textContent = 'Track Order';
+
+                    if (res.success) {
+                        displayOrderData(res.data);
+                    } else {
+                        displayError(res.error);
+                    }
+                })
+                .catch(error => {
+                    loader.style.display = 'none';
+                    trackButton.disabled = false;
+                    trackButton.textContent = 'Track Order';
+                    displayError('Could not connect. Please try again.');
+                    console.error('Error:', error);
+                });
+        });
+
+        function displayOrderData(data) {
+            
+            let statusText = data.status.toLowerCase();
+            let progressPercent = 10; 
+            let step1_class = "", step2_class = "", step3_class = "";
+            let step1_desc = "Your order has been received.",
+                step2_desc = "Your piece is being crafted.",
+                step3_desc = "Your order is ready.";
+            let currentHeadline = "Your Order is Pending";
+
+            if (statusText.includes('pending')) {
+                progressPercent = 25;
+                step1_class = "active";
+                step1_desc = `Status: ${data.status}`;
+                currentHeadline = "Your Order is Pending";
+            } 
+            else if (statusText.includes('processing') || statusText.includes('crafting') || statusText.includes('polishing')) {
+                progressPercent = 60;
+                step1_class = "active";
+                step2_class = "active";
+                step2_desc = `Status: ${data.status}`;
+                currentHeadline = "Your Piece is Being Crafted";
+            } 
+            else if (statusText.includes('ready') || statusText.includes('shipped') || statusText.includes('delivered') || statusText.includes('complete')) {
+                progressPercent = 100;
+                step1_class = "active";
+                step2_class = "active";
+                step3_class = "active";
+                step3_desc = `Status: ${data.status}`;
+                currentHeadline = `Your Order is ${data.status}`;
+            }
+
+            const html = `
+                <div class="result-card">
+                    <h2 class="current-status-headline">${currentHeadline}</h2>
+                    <div class="progress-bar-container">
+                        <div class="progress-bar-fill" style="width: ${progressPercent}%;"></div>
+                    </div>
+                    <div class="result-header">
+                        <h3>Order: ${data.orderId}</h3>
+                        <p>For <strong>${data.customerName}</strong> (${data.product})</p>
+                    </div>
+                    <ul class="status-timeline">
+                        <li class="${step1_class}">
+                            <div class="status-title">Order Placed</div>
+                            <div class="status-desc">${step1_desc}</div>
+                        </li>
+                        <li class="${step2_class}">
+                            <div class="status-title">Processing</div>
+                            <div class="status-desc">${step2_desc}</div>
+                        </li>
+                        <li class="${step3_class}">
+                            <div class="status-title">Ready</div>
+                            <div class="status-desc">${step3_desc}</div>
+                        </li>
+                    </ul>
+                </div>
+            `;
+            resultContainer.innerHTML = html;
+        }
+
+        function displayError(message) {
+            const html = `<p class="error-message">${message}</p>`;
+            resultContainer.innerHTML = html;
+        }
+
+    </script>
+
+</body>
+</html>
